@@ -1,0 +1,81 @@
+name: Repackage SOEM to Debian
+
+on:
+  workflow_dispatch:
+
+env:
+  SOEM_VERSION: "2.0.0"
+
+jobs:
+  repackage:
+    name: Repackage .deb for ${{ matrix.deb_arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - zip_arch: x86_64
+            deb_arch: amd64
+          - zip_arch: aarch64
+            deb_arch: arm64
+
+    steps:
+      - name: Install Repackaging Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip dpkg-dev
+
+      - name: Download SOEM Pre-built Zip via GitHub API
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v${{ env.SOEM_VERSION }} -R OpenEtherCATsociety/SOEM -p "soem-${{ env.SOEM_VERSION }}-Linux-${{ matrix.zip_arch }}.zip"
+
+      - name: Extract Zip and Prepare Debian Structure
+        run: |
+          # 1. 解压官方 zip 到 ext_root 目录
+          unzip soem-${{ env.SOEM_VERSION }}-Linux-${{ matrix.zip_arch }}.zip -d ext_root
+
+          # 2. 建立符合 Linux FHS 标准的目录结构
+          mkdir -p deb_package_root/DEBIAN
+          mkdir -p deb_package_root/usr/bin
+          mkdir -p deb_package_root/usr/include
+          mkdir -p deb_package_root/usr/lib
+          mkdir -p deb_package_root/usr/lib/cmake/soem
+          mkdir -p deb_package_root/usr/share/soem/scripts
+
+          # 3. 智能定位解压后的根目录 
+          # (防止官方 zip 有时候带一层同名父目录，有时候直接散落一地)
+          SRC_DIR=$(find ext_root -name "include" -type d | head -n 1 | xargs dirname)
+
+          # 4. 精准分发到系统标准路径 (使用 cp -a 确保完美保留软链接文件)
+          [ -d "$SRC_DIR/bin" ] && cp -a $SRC_DIR/bin/. deb_package_root/usr/bin/
+          [ -d "$SRC_DIR/include" ] && cp -a $SRC_DIR/include/. deb_package_root/usr/include/
+          [ -d "$SRC_DIR/lib" ] && cp -a $SRC_DIR/lib/. deb_package_root/usr/lib/
+          [ -d "$SRC_DIR/cmake" ] && cp -a $SRC_DIR/cmake/. deb_package_root/usr/lib/cmake/soem/
+          [ -d "$SRC_DIR/scripts" ] && cp -a $SRC_DIR/scripts/. deb_package_root/usr/share/soem/scripts/
+
+          # 5. 动态生成 control 文件
+          cat <<EOF > deb_package_root/DEBIAN/control
+          Package: soem
+          Version: ${{ env.SOEM_VERSION }}
+          Architecture: ${{ matrix.deb_arch }}
+          Maintainer: Open EtherCAT Society <openethercatsociety@rt-labs.com>
+          Section: libs
+          Priority: optional
+          Description: Simple Open EtherCAT Master v${{ env.SOEM_VERSION }}
+           SOEM is an open source EtherCAT master library.
+           This package provides the core library and headers.
+           Repackaged automatically from official binary release.
+          EOF
+
+      - name: Build .deb Package
+        run: |
+          # 压制 deb 包
+          dpkg-deb --build deb_package_root soem_${{ env.SOEM_VERSION }}_${{ matrix.deb_arch }}.deb
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: soem-v${{ env.SOEM_VERSION }}-${{ matrix.deb_arch }}-deb
+          path: soem_${{ env.SOEM_VERSION }}_${{ matrix.deb_arch }}.deb
+          retention-days: 7
