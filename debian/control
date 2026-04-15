@@ -1,0 +1,13 @@
+Package: libsoem-dev
+Version: VERSION_PLACEHOLDER
+Section: libdevel
+Priority: optional
+Architecture: ARCH_PLACEHOLDER
+Depends: libc6
+Maintainer: Flora <2321901849@qq.com>
+Homepage: https://github.com/OpenEtherCATsociety/SOEM
+Description: Development files for the SOEM EtherCAT master library
+ Simple Open EtherCAT Master (SOEM) library for Linux.
+ This package is built from the upstream SOEM v2.0.0 source
+ submodule and contains headers, shared library, CMake exports, and
+ pkg-config metadata for amd64 or arm64 Linux systems.
