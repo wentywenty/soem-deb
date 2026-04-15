@@ -11,15 +11,9 @@ jobs:
       matrix:
         include:
           - arch: amd64
-            runner:
-              - self-hosted
-              - Linux
-              - X64
+            runner: ubuntu-22.04
           - arch: arm64
-            runner:
-              - self-hosted
-              - Linux
-              - ARM64
+            runner: ubuntu-22.04-arm
 
     runs-on: ${{ matrix.runner }}
 
