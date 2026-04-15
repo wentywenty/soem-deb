@@ -174,8 +174,8 @@ if compgen -G "$PACKAGE_DIR/usr/lib/libsoem*" >/dev/null; then
 fi
 
 if [[ -d "$PACKAGE_DIR/usr/cmake" ]]; then
-    mkdir -p "$PACKAGE_DIR/usr/lib/cmake/soem"
-    cp -a "$PACKAGE_DIR/usr/cmake/." "$PACKAGE_DIR/usr/lib/cmake/soem/"
+    mkdir -p "$PACKAGE_DIR/usr/lib/$GNU_TRIPLET/cmake/soem"
+    cp -a "$PACKAGE_DIR/usr/cmake/." "$PACKAGE_DIR/usr/lib/$GNU_TRIPLET/cmake/soem/"
     rm -rf "$PACKAGE_DIR/usr/cmake"
 fi
 
@@ -196,7 +196,7 @@ mkdir -p "$PACKAGE_DIR/usr/lib/$GNU_TRIPLET/pkgconfig"
 cat > "$PACKAGE_DIR/usr/lib/$GNU_TRIPLET/pkgconfig/soem.pc" <<EOF
 prefix=/usr
 exec_prefix=\${prefix}
-includedir=\${prefix}/include/soem
+includedir=\${prefix}/include
 libdir=\${prefix}/lib/$GNU_TRIPLET
 
 Name: soem
@@ -205,6 +205,16 @@ Version: $VERSION
 Libs: -L\${libdir} -lsoem
 Cflags: -I\${includedir}
 EOF
+
+if [[ -d "$PACKAGE_DIR/usr/lib/$GNU_TRIPLET/cmake/soem" ]]; then
+    find "$PACKAGE_DIR/usr/lib/$GNU_TRIPLET/cmake/soem" -type f \( -name '*.cmake' -o -name '*Config*' \) -print0 | while IFS= read -r -d '' cmake_file; do
+        sed -i "s#/usr/lib/#/usr/lib/$GNU_TRIPLET/#g" "$cmake_file"
+        sed -i "s#\${_IMPORT_PREFIX}/lib/#\${_IMPORT_PREFIX}/lib/$GNU_TRIPLET/#g" "$cmake_file"
+    done
+fi
+
+mkdir -p "$PACKAGE_DIR/usr/lib/cmake"
+ln -sfn "../$GNU_TRIPLET/cmake/soem" "$PACKAGE_DIR/usr/lib/cmake/soem"
 
 find "$PACKAGE_DIR" -type d -empty -delete
 

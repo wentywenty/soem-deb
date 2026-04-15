@@ -56,3 +56,25 @@ output/libsoem-dev_2.0.0.1_amd64.deb
 
 GitHub Actions 工作流只负责 checkout 仓库，然后调用 build_deb.sh。
 依赖安装和打包逻辑全部收敛在脚本内部。
+
+## CMake / pkg-config 使用
+
+这个包会把 SOEM 安装到更适合 Linux 开发包查找的目录：
+
+- 库：`/usr/lib/<triplet>/libsoem.so`
+- CMake config：`/usr/lib/<triplet>/cmake/soem/`
+- 兼容软链接：`/usr/lib/cmake/soem`
+- pkg-config：`/usr/lib/<triplet>/pkgconfig/soem.pc`
+
+因此项目侧优先建议这样找：
+
+```cmake
+find_package(soem CONFIG QUIET)
+```
+
+如果目标环境只配了 pkg-config，再回退到：
+
+```cmake
+find_package(PkgConfig QUIET)
+pkg_check_modules(SOEM QUIET soem)
+```

@@ -6,15 +6,22 @@ on:
 jobs:
   build:
     name: Build ${{ matrix.arch }} package
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
           - arch: amd64
-            cross_prefix: ""
+            runner:
+              - self-hosted
+              - Linux
+              - X64
           - arch: arm64
-            cross_prefix: aarch64-linux-gnu-
+            runner:
+              - self-hosted
+              - Linux
+              - ARM64
+
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout repository
@@ -25,7 +32,6 @@ jobs:
       - name: Build Debian package
         env:
           ARCH: ${{ matrix.arch }}
-          CROSS_PREFIX: ${{ matrix.cross_prefix }}
           INSTALL_DEPS: "1"
         run: ./build_deb.sh
 
