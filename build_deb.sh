@@ -210,7 +210,19 @@ if [[ -d "$PACKAGE_DIR/usr/lib/$GNU_TRIPLET/cmake/soem" ]]; then
     find "$PACKAGE_DIR/usr/lib/$GNU_TRIPLET/cmake/soem" -type f \( -name '*.cmake' -o -name '*Config*' \) -print0 | while IFS= read -r -d '' cmake_file; do
         sed -i "s#/usr/lib/#/usr/lib/$GNU_TRIPLET/#g" "$cmake_file"
         sed -i "s#\${_IMPORT_PREFIX}/lib/#/usr/lib/$GNU_TRIPLET/#g" "$cmake_file"
+        sed -i "s#\${_IMPORT_PREFIX}/include/soem#/usr/include/soem#g" "$cmake_file"
+        sed -i "s#\${_IMPORT_PREFIX}/include#/usr/include#g" "$cmake_file"
     done
+
+    if grep -R -n '\${_IMPORT_PREFIX}/lib/' "$PACKAGE_DIR/usr/lib/$GNU_TRIPLET/cmake/soem" >/dev/null; then
+        echo "Error: unresolved SOEM CMake lib export path remains after packaging rewrite." >&2
+        exit 1
+    fi
+
+    if grep -R -n '\${_IMPORT_PREFIX}/include' "$PACKAGE_DIR/usr/lib/$GNU_TRIPLET/cmake/soem" >/dev/null; then
+        echo "Error: unresolved SOEM CMake include export path remains after packaging rewrite." >&2
+        exit 1
+    fi
 fi
 
 mkdir -p "$PACKAGE_DIR/usr/lib/cmake"
