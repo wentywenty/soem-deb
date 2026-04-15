@@ -209,7 +209,7 @@ EOF
 if [[ -d "$PACKAGE_DIR/usr/lib/$GNU_TRIPLET/cmake/soem" ]]; then
     find "$PACKAGE_DIR/usr/lib/$GNU_TRIPLET/cmake/soem" -type f \( -name '*.cmake' -o -name '*Config*' \) -print0 | while IFS= read -r -d '' cmake_file; do
         sed -i "s#/usr/lib/#/usr/lib/$GNU_TRIPLET/#g" "$cmake_file"
-        sed -i "s#\${_IMPORT_PREFIX}/lib/#\${_IMPORT_PREFIX}/lib/$GNU_TRIPLET/#g" "$cmake_file"
+        sed -i "s#\${_IMPORT_PREFIX}/lib/#/usr/lib/$GNU_TRIPLET/#g" "$cmake_file"
     done
 fi
 

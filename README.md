@@ -66,6 +66,8 @@ GitHub Actions 工作流只负责 checkout 仓库，然后调用 build_deb.sh。
 - 兼容软链接：`/usr/lib/cmake/soem`
 - pkg-config：`/usr/lib/<triplet>/pkgconfig/soem.pc`
 
+其中 CMake 导出文件会在打包阶段重写库路径，使 `find_package(soem CONFIG)` 指向真实的 multiarch 库目录，而不是上游默认的非 Debian 安装布局。
+
 因此项目侧优先建议这样找：
 
 ```cmake
