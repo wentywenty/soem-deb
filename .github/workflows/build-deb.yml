@@ -23,10 +23,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Upgrade CMake
+      - name: Install build dependencies and Upgrade CMake
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip
+          sudo apt-get install -y build-essential debhelper dh-make cmake pkg-config python3-pip
           sudo pip3 install cmake --upgrade
 
       - name: Build Debian package
