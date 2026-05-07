@@ -1,0 +1,11 @@
+soem (2.0.0-2) stable; urgency=medium
+
+  * update deb pack and readme
+
+ -- wentywenty <2321901849@qq.com>  Thu, 07 May 2026 18:19:28 +0800
+
+soem (2.0.0-1) unstable; urgency=medium
+
+  * Convert to native Debian package format.
+
+ -- Flora <2321901849@qq.com>  Thu, 07 May 2026 12:00:00 +0000

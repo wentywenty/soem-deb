@@ -1,0 +1,64 @@
+#!/usr/bin/make -f
+export DH_VERBOSE=1
+
+# Get standard CMake installation paths like DEB_HOST_MULTIARCH
+include /usr/share/dpkg/pkg-info.mk
+include /usr/share/dpkg/architecture.mk
+
+%:
+	dh $@ --buildsystem=cmake --sourcedirectory=SOEM
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DBUILD_SHARED_LIBS=ON \
+		-DSOEM_BUILD_SAMPLES=OFF \
+		-DCMAKE_INSTALL_LIBDIR=lib/$(DEB_HOST_MULTIARCH)
+
+override_dh_install:
+	dh_install
+	# SOEM CMake doesn't use GNUInstallDirs properly, moving libraries
+	mkdir -p debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)
+	if ls debian/libsoem-dev/usr/lib/libsoem* 1> /dev/null 2>&1; then \
+		mv debian/libsoem-dev/usr/lib/libsoem* debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/; \
+	fi
+	
+	if [ -d "debian/libsoem-dev/usr/cmake" ]; then \
+		mkdir -p debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/soem; \
+		mv debian/libsoem-dev/usr/cmake/* debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/soem/; \
+		rm -rf debian/libsoem-dev/usr/cmake; \
+	fi
+	
+	if [ -d "debian/libsoem-dev/usr/scripts" ]; then \
+		mkdir -p debian/libsoem-dev/usr/share/soem/scripts; \
+		mv debian/libsoem-dev/usr/scripts/* debian/libsoem-dev/usr/share/soem/scripts/; \
+		rm -rf debian/libsoem-dev/usr/scripts; \
+	fi
+
+	mkdir -p debian/libsoem-dev/usr/share/doc/libsoem-dev
+	for doc_file in SOEM/README.md SOEM/LICENSE; do \
+		if [ -f "$$doc_file" ]; then \
+			cp "$$doc_file" debian/libsoem-dev/usr/share/doc/libsoem-dev/; \
+		fi; \
+	done
+	
+	# Generate pkg-config
+	mkdir -p debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig
+	echo "prefix=/usr" > debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/soem.pc
+	echo "exec_prefix=\$${prefix}" >> debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/soem.pc
+	echo "includedir=\$${prefix}/include" >> debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/soem.pc
+	echo "libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH)" >> debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/soem.pc
+	echo "" >> debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/soem.pc
+	echo "Name: soem" >> debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/soem.pc
+	echo "Description: Simple Open EtherCAT Master library" >> debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/soem.pc
+	echo "Version: $(DEB_VERSION_UPSTREAM)" >> debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/soem.pc
+	echo "Libs: -L\$${libdir} -lsoem" >> debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/soem.pc
+	echo "Cflags: -I\$${includedir}" >> debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/pkgconfig/soem.pc
+
+	# Fix cmake paths
+	if [ -d "debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/soem" ]; then \
+		find debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/soem -type f \( -name '*.cmake' -o -name '*Config*' \) -exec sed -i "s|/usr/lib/|/usr/lib/$(DEB_HOST_MULTIARCH)/|g" {} +; \
+		find debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/soem -type f \( -name '*.cmake' -o -name '*Config*' \) -exec sed -i "s|\$${_IMPORT_PREFIX}/lib/|/usr/lib/$(DEB_HOST_MULTIARCH)/|g" {} +; \
+		find debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/soem -type f \( -name '*.cmake' -o -name '*Config*' \) -exec sed -i "s|\$${_IMPORT_PREFIX}/include/soem|/usr/include/soem|g" {} +; \
+		find debian/libsoem-dev/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/soem -type f \( -name '*.cmake' -o -name '*Config*' \) -exec sed -i "s|\$${_IMPORT_PREFIX}/include|/usr/include|g" {} +; \
+	fi

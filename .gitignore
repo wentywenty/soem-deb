@@ -1,2 +1,12 @@
-/build/
-/output/
+# debhelper build outputs
+obj-*/
+debian/files
+debian/debhelper-build-stamp
+debian/*.debhelper.log
+debian/*.substvars
+debian/lib*/
+debian/.debhelper/
+
+# build
+build/
+output/
