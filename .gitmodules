@@ -1,4 +1,0 @@
-[submodule "SOEM"]
-	path = SOEM
-	url = https://github.com/OpenEtherCATsociety/SOEM
-	branch = master
